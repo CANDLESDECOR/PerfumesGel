@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scent高級 - Елітні Гелі для Душу</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #d4af37;
+            --light: #f9f9f9;
+            --dark: #1a1a1a;
+            --text: #333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--light); color: var(--text); line-height: 1.6; }
+        header { background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1608248597481-496100c80836?auto=format&fit=crop&w=1600&q=80') no-repeat center center/cover; color: white; text-align: center; padding: 100px 20px; }
+        header h1 { font-size: 3rem; margin-bottom: 10px; color: var(--accent); letter-spacing: 2px; }
+        header p { font-size: 1.2rem; max-width: 600px; margin: 0 auto 20px; }
+        
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .config-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 20px; border-radius: 8px; margin-bottom: 40px; text-align: center; }
+        .config-box input { padding: 10px; margin: 5px; width: 250px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; }
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s; display: flex; flex-direction: column; }
+        .card:hover { transform: translateY(-5px); }
+        .card-img { height: 250px; background-size: cover; background-position: center; position: relative; }
+        .badge { position: absolute; top: 10px; right: 10px; background: var(--accent); color: var(--dark); padding: 5px 10px; font-weight: bold; font-size: 0.8rem; border-radius: 4px; }
+        .card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-title { font-size: 1.2rem; color: var(--primary); margin-bottom: 10px; }
+        .card-desc { font-size: 0.9rem; color: #666; margin-bottom: 15px; height: 60px; overflow: hidden; }
+        .card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .price { font-size: 1.3rem; font-weight: bold; color: var(--dark); }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.3s; }
+        .btn:hover { background: var(--dark); }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 450px; width: 100%; box-shadow: 0 5px 25px rgba(0,0,0,0.2); }
+        .modal h2 { margin-bottom: 20px; color: var(--primary); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+        .modal-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn-secondary { background: #ddd; color: #333; }
+        .btn-secondary:hover { background: #ccc; }
+        
+        footer { background: var(--primary); color: white; text-align: center; padding: 20px; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Scent高級</h1>
+        <p>Колекція натуральних парфумованих гелів для душу. Знайдіть свій ідеальний аромат для незабутнього релаксу.</p>
+    </header>
+
+    <div class="container">
+        <!-- Налаштування Telegram в інтерфейсі для зручності копіювання коду -->
+        <div class="config-box">
+            <h3>⚙️ Налаштування сповіщень Telegram (Замініть на власні дані в коді або введіть тут):</h3>
+            <input type="text" id="tgToken" placeholder="Введіть Токен Бота (Bot Token)">
+            <input type="text" id="tgChatId" placeholder="Введіть Chat ID отримувача">
+            <p style="font-size: 0.85rem; color: #666; margin-top: 5px;">Дані зберігаються локально у вашому браузері для тестів.</p>
+        </div>
+
+        <div class="grid" id="products-grid"></div>
+    </div>
+
+    <!-- Модальне вікно замовлення -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Оформлення замовлення</h2>
+            <form id="orderForm">
+                <input type="hidden" id="prodName">
+                <input type="hidden" id="prodPrice">
+                <div class="form-group">
+                    <label for="userName">Ваше Ім'я та Прізвище</label>
+                    <input type="text" id="userName" required placeholder="Іван Іванов">
+                </div>
+                <div class="form-group">
+                    <label for="userPhone">Номер телефону</label>
+                    <input type="tel" id="userPhone" required placeholder="+380">
+                </div>
+                <div class="form-group">
+                    <label for="delivery">Спосіб доставки</label>
+                    <select id="delivery">
+                        <option value="Нова Пошта (Відділення)">Нова Пошта (Відділення)</option>
+                        <option value="Нова Пошта (Поштомат)">Нова Пошта (Поштомат)</option>
+                        <option value="Укрпошта">Укрпошта</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="address">Місто та № відділення/адреса</label>
+                    <input type="text" id="address" required placeholder="Київ, відділення №15">
+                </div>
+                <div class="modal-btns">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Скасувати</button>
+                    <button type="submit" class="btn">Підтвердити замовлення</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Scent高級. Усі права захищені. Доставка по всій Україні.</p>
+    </footer>
+
+    <script>
+        // 12 позицій гелів для душу з фото з Unsplash
+        const products = [
+            { id: 1, name: "Кокосовий Рай (Coconut Dream)", price: 185, desc: "Ніжний гель із глибоким зволоженням та солодким ароматом тропічного кокосу.", img: "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=400&q=80", badge: "Хіт" },
+            { id: 2, name: "Цитрусовий Вибух (Citrus Blast)", price: 190, desc: "Тонізуючий мікс апельсина, грейпфрута та лимона для бадьорого ранку.", img: "https://images.unsplash.com/photo-1614859324967-bdf461fec769?auto=format&fit=crop&w=400&q=80", badge: "Енергія" },
+            { id: 3, name: "Лавандовий Релакс (Lavender Fields)", price: 195, desc: "Заспокійливий аромат французької лаванди для ідеального вечірнього сну.", img: "https://images.unsplash.com/photo-1528183429752-a97d0bf99b5a?auto=format&fit=crop&w=400&q=80", badge: "Релакс" },
+            { id: 4, name: "Дика Червона Роза (Wild Velvet Rose)", price: 240, desc: "Чуттєвий та розкішний аромат розквітлої троянди з нотами оксамиту.", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80", badge: "Premium" },
+            { id: 5, name: "Зелений Чай та Бамбук (Green Tea & Bamboo)", price: 180, desc: "Освіжаючий, легкий трав'яний аромат для максимального очищення та свіжості.", img: "https://images.unsplash.com/photo-1594541785501-aa5549925921?auto=format&fit=crop&w=400&q=80", badge: "Еко" },
+            { id: 6, name: "Стиглий Манго (Juicy Mango)", price: 210, desc: "Екзотичний солодкий аромат стиглого манго, що перенесе вас на острови.", img: "https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=400&q=80", badge: "Популярне" },
+            { id: 7, name: "Морський Бриз (Deep Ocean)", price: 185, desc: "Кришталєва свіжість океанічного повітря та мінералів. Ідеально для чоловіків та жінок.", img: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=400&q=80", badge: "Unisex" },
+            { id: 8, name: "Чорна Ваніль (Midnight Vanilla)", price: 230, desc: "Теплий, затишний та неймовірно спокусливий аромат пряної чорної ванілі.", img: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=400&q=80", badge: "Новинка" },
+            { id: 9, name: "Мигдалеве Молочко (Almond Milk)", price: 200, desc: "Ультра-м'яка формула з мигдалевою олією для дуже чутливої та сухої шкіри.", img: "https://images.unsplash.com/photo-1505575967455-40e256f73376?auto=format&fit=crop&w=400&q=80", badge: "Ніжність" },
+            { id: 10, name: "Сандал та Мускус (Sandalwood Oud)", price: 260, desc: "Глибокий, деревний шлейфовий аромат із преміальної лінійки селективних парфумів.", img: "https://images.unsplash.com/photo-1615396899839-c99c121888b0?auto=format&fit=crop&w=400&q=80", badge: "Люкс" },
+            { id: 11, name: "Лісові Ягоди (Wild Berry Mix)", price: 190, desc: "Яскравий кисло-солодкий вибух ожини, малини та лохини у кожній краплі.", img: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&w=400&q=80", badge: "Знижка" },
+            { id: 12, name: "М'ята та Евкаліпт (Mint Therapy)", price: 195, desc: "Максимальний охолоджуючий ефект та детокс після важких тренувань чи робочого дня.", img: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=400&q=80", badge: "Спорт" }
+        ];
+
+        // Рендеринг карток товарів
+        const grid = document.getElementById('products-grid');
+        products.forEach(p => {
+            grid.innerHTML += `
+                <div class="card">
+                    <div class="card-img" style="background-image: url('${p.img}')">
+                        <span class="badge">${p.badge}</span>
+                    </div>
+                    <div class="card-content">
+                        <div>
+                            <h3 class="card-title">${p.name}</h3>
+                            <p class="card-desc">${p.desc}</p>
+                        </div>
+                        <div class="card-footer">
+                            <span class="price">${p.price} ₴</span>
+                            <button class="btn" onclick="openModal('${p.name}', ${p.price})">Купити</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Завантаження збережених налаштувань Telegram
+        document.getElementById('tgToken').value = localStorage.getItem('tgToken') || '';
+        document.getElementById('tgChatId').value = localStorage.getItem('tgChatId') || '';
+
+        function openModal(name, price) {
+            document.getElementById('modalTitle').innerText = `Замовити: ${name}`;
+            document.getElementById('prodName').value = name;
+            document.getElementById('prodPrice').value = price;
+            document.getElementById('orderModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').style.display = 'none';
+        }
+
+        // Обробка замовлення та відправка в Telegram
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Токен та Chat ID (пріоритет з полів введення, інакше впишіть жорстко нижче)
+            const tokenFromInput = document.getElementById('tgToken').value.trim();
+            const chatIdFromInput = document.getElementById('tgChatId').value.trim();
+
+            // Збережемо для зручності
+            localStorage.setItem('tgToken', tokenFromInput);
+            localStorage.setItem('tgChatId', chatIdFromInput);
+
+            // ! ЗАМІНІТЬ ЦІ ЗМІННІ НА СВОЇ, ЯКЩО НЕ ХОЧЕТЕ ВВОДИТИ ЇХ НА САЙТІ ВРУЧНУ !
+            const TELEGRAM_TOKEN = tokenFromInput || "ВАШ_ТОКЕН_БОТА";
+            const TELEGRAM_CHAT_ID = chatIdFromInput || "ВАШ_CHAT_ID";
+
+            if (!tokenFromInput || !chatIdFromInput) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Увага',
+                    text: 'Будь ласка, заповніть Токен бота та Chat ID у верхньому блоці налаштувань для перевірки відправки!'
+                });
+                return;
+            }
+
+            const prodName = document.getElementById('prodName').value;
+            const prodPrice = document.getElementById('prodPrice').value;
+            const userName = document.getElementById('userName').value;
+            const userPhone = document.getElementById('userPhone').value;
+            const delivery = document.getElementById('delivery').value;
+            const address = document.getElementById('address').value;
+
+            // Формування повідомлення (з підтримкою Markdown)
+            const message = `🚨 *НОВЕ ЗАМОВЛЕННЯ* 🚨\n\n` +
+                            `📦 *Товар:* ${prodName}\n` +
+                            `💰 *Ціна:* ${prodPrice} ₴\n\n` +
+                            `👤 *Покупець:* ${userName}\n` +
+                            `📞 *Телефон:* ${userPhone}\n` +
+                            `🚚 *Доставка:* ${delivery}\n` +
+                            `📍 *Адреса:* ${address}`;
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message,
+                    parse_mode: "Markdown"
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Дякуємо за замовлення!',
+                        text: 'Менеджер зв'яжеться з вами найближчим часом.',
+                        confirmButtonColor: '#2c3e50'
+                    });
+                    closeModal();
+                    document.getElementById('orderForm').reset();
+                } else {
+                    throw new Error(data.description);
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Помилка відправки',
+                    text: 'Не вдалося надіслати замовлення. Перевірте правильність Bot Token та Chat ID. Помилка: ' + error.message
+                });
+            });
+        });
+    </script>
+</body>
+</html>
